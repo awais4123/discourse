@@ -13,13 +13,18 @@ export default Ember.Component.extend({
   _rootNode: null,
   _timeout: null,
   _widgetClass: null,
-  _afterRender: null,
+  _renderCallback: null,
 
   init() {
     this._super();
     const name = this.get('widget');
 
     this._widgetClass = queryRegistry(name) || this.container.lookupFactory(`widget:${name}`);
+
+    if (!this._widgetClass) {
+      console.error(`Error: Could not find widget: ${name}`);
+    }
+
     this._connected = [];
   },
 
@@ -45,9 +50,12 @@ export default Ember.Component.extend({
     Ember.run.cancel(this._timeout);
   },
 
+  afterRender() {
+  },
+
   queueRerender(callback) {
-    if (callback && !this._afterRender) {
-      this._afterRender = callback;
+    if (callback && !this._renderCallback) {
+      this._renderCallback = callback;
     }
 
     Ember.run.scheduleOnce('render', this, this.rerenderWidget);
@@ -56,6 +64,8 @@ export default Ember.Component.extend({
   rerenderWidget() {
     Ember.run.cancel(this._timeout);
     if (this._rootNode) {
+      if (!this._widgetClass) { return; }
+
       const t0 = new Date().getTime();
 
       const opts = { model: this.get('model') };
@@ -82,10 +92,12 @@ export default Ember.Component.extend({
 
       this._tree = newTree;
 
-      if (this._afterRender) {
-        this._afterRender();
-        this._afterRender = null;
+      if (this._renderCallback) {
+        this._renderCallback();
+        this._renderCallback = null;
       }
+
+      this.afterRender();
 
       renderedKey('*');
       if (this.profileWidget) {

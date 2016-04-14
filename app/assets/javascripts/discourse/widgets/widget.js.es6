@@ -117,6 +117,7 @@ export default class Widget {
     this.site = container.lookup('site:main');
     this.siteSettings = container.lookup('site-settings:main');
     this.currentUser = container.lookup('current-user:main');
+    this.capabilities = container.lookup('capabilities:main');
     this.store = container.lookup('store:main');
     this.appEvents = container.lookup('app-events:main');
     this.keyValueStore = container.lookup('key-value-store:main');
@@ -238,7 +239,7 @@ export default class Widget {
 
       if (target) {
         // TODO: Use ember closure actions
-        const actions = target._actions || target.actionHooks;
+        const actions = target._actions || target.actionHooks || {};
         const method = actions[actionName];
         if (method) {
           promise = method.call(target, param);
